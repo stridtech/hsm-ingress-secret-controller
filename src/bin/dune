@@ -1,0 +1,4 @@
+(executable
+ (package azure)
+ (public_name akv_cert_secret)
+ (libraries piaf logs logs.fmt fmt.tty eio_main logs.threaded jose azure_akv))

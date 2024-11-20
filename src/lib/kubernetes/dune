@@ -1,0 +1,6 @@
+(library
+ (name kubernetes)
+ (public_name kubernetes)
+ (libraries eio fmt logs mtime piaf uri yojson)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))

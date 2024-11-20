@@ -1,0 +1,6 @@
+(library
+ (name azure_akv)
+ (public_name azure.akv)
+ (libraries eio fmt logs mtime piaf uri yojson)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))
