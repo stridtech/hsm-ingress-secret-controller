@@ -1,5 +1,5 @@
 (library
- (name azure_akv)
+ (name akv)
  (public_name azure.akv)
  (libraries eio fmt logs mtime piaf uri yojson)
  (preprocess

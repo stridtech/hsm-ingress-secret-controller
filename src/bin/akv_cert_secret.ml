@@ -20,7 +20,7 @@ let base_headers = [ "User-Agent", "k8s-akv-client/1.0"; "Accept", "*/*" ]
 let request ~env ~sw akv name =
   let open Piaf in
   let open Result in
-  let akv_uri = Azure_akv.Akv.Certificate.make_uri ~akv ~name () in
+  let akv_uri = Akv.Certificate.make_uri ~akv ~name () in
   let* client =
     Client.create
       env
@@ -43,12 +43,10 @@ let request ~env ~sw akv name =
 
   let+ body = Body.to_string response.body in
   Logs.info (fun m -> m "body: %s" body);
-  let ret =
-    body |> Yojson.Safe.from_string |> Azure_akv.Akv.Certificate.of_yojson
-  in
+  let ret = body |> Yojson.Safe.from_string |> Akv.Certificate.of_yojson in
   match ret with
   | Ok json ->
-    Logs.info (fun m -> m "%a" Azure_akv.Akv.Certificate.pp json);
+    Logs.info (fun m -> m "%a" Akv.Certificate.pp json);
     Client.shutdown client
   | Error error ->
     Format.eprintf "error: %s@." error;

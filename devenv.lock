@@ -99,6 +99,20 @@
         "type": "github"
       }
     },
+    "nix-filter": {
+      "locked": {
+        "lastModified": 1731533336,
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "rev": "f7653272fd234696ae94229839a99b73c9ab7de0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "type": "github"
+      }
+    },
     "nix2container": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -194,6 +208,7 @@
       "inputs": {
         "devenv": "devenv",
         "mk-shell-bin": "mk-shell-bin",
+        "nix-filter": "nix-filter",
         "nix2container": "nix2container",
         "nixpkgs": "nixpkgs",
         "ocaml-overlay": "ocaml-overlay",

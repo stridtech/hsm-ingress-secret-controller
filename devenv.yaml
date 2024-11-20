@@ -15,3 +15,5 @@ inputs:
         follows: nixpkgs
   mk-shell-bin:
     url: github:rrbutani/nix-mk-shell-bin
+  nix-filter:
+    url: github:numtide/nix-filter

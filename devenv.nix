@@ -8,7 +8,7 @@
 
 let
   ocamlPackages = pkgs.ocaml-ng.ocamlPackages_5_2;
-  akv_cert_secret = ocamlPackages.callPackage ./nix { };
+  akv_cert_secret = ocamlPackages.callPackage ./nix { nix-filter = inputs.nix-filter.lib; };
 in
 {
   # https://devenv.sh/languages/
@@ -23,29 +23,26 @@ in
 
   # https://devenv.sh/processes/
   processes = {
-    # format.exec = "${pkgs.watchexec}/bin/watchexec -e ml,dune -- dune build @fmt --auto-promote";
-    build.exec = "${pkgs.watchexec}/bin/watchexec -e ml,dune -- dune build ./src/bin/akv_cert_secret";
-    # akv_cert_secret.exec = "dune exec src/bin/akv_cert_secret.exe";
+    build.exec = "${pkgs.watchexec}/bin/watchexec -e ml,dune -- dune build -p azure";
   };
 
+  # https://devenv.sh/scripts/
   scripts = {
     akv_cert.exec = "${akv_cert_secret}/bin/akv_cert_secret";
     run-with-token.exec = ''
       export AKV_ACCESS_TOKEN=$(az account get-access-token --resource https://vault.azure.net --query accessToken --output tsv)
-      dune exec src/bin/akv_cert_secret.exe -- --akv "$AKV" --name "$CERTIFICATE"
+      ${akv_cert_secret}/bin/akv_cert_secret --akv "$AKV" --name "$CERTIFICATE"
     '';
   };
 
   containers."prod" = {
     name = "akv-cert-secret";
-    copyToRoot = "${akv_cert_secret}";
-    startupCommand = "ls && ls /bin";
+    copyToRoot = [ akv_cert_secret ];
+    startupCommand = "${akv_cert_secret}/bin/akv_cert_secret";
   };
 
   # https://devenv.sh/services/
   # services.postgres.enable = true;
-
-  # https://devenv.sh/scripts/
 
   # enterShell = ''
   #   git --version
@@ -56,6 +53,8 @@ in
   #   "myproj:setup".exec = "mytool build";
   #   "devenv:enterShell".after = [ "myproj:setup" ];
   # };
+
+  git-hooks.hooks.dune-fmt.enable = true;
 
   # https://devenv.sh/tests/
   enterTest = ''
