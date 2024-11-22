@@ -1,3 +1,15 @@
+(* TODO: move to some shared stdlib *)
+module Result = struct
+  include Result
+
+  let ( let+ ) result f = map f result
+  let ( let* ) = bind
+
+  (* let ( and* ) r1 r2 = match r1, r2 with | Ok x, Ok y -> Ok (x, y) | Ok _,
+     Error e | Error e, Ok _ | Error e, Error _ -> Error e
+  *)
+end
+
 module ServiceAccount = struct
   let get_token ~env () =
     let fs = Eio.Stdenv.fs env in
@@ -6,14 +18,37 @@ module ServiceAccount = struct
         Eio.Path.(fs / "/var/run/secrets/kubernetes.io/serviceaccount/token")
     in
     token
+
+  let get_namespace ~env () =
+    let fs = Eio.Stdenv.fs env in
+    let namespace =
+      Eio.Path.load
+        Eio.Path.(
+          fs / "/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+    in
+    namespace
 end
 
 module Client = struct
-  let make ~sw ~stdenv () =
+  let make ~sw ~env () =
     Piaf.Client.create
       ~sw
-      stdenv
+      env
+      ~config:
+        { Piaf.Config.default with
+          follow_redirects = true
+        ; allow_insecure = true
+        ; flush_headers_immediately = false
+        }
       (Uri.of_string "https://kubernetes.default.svc")
+
+  let make_headers ~env =
+    let token = ServiceAccount.get_token ~env () in
+    let authorization = Printf.sprintf "Bearer %s" token in
+    [ "Authorization", authorization
+    ; "Content-Type", "application/json"
+    ; "Accept", "application/json"
+    ]
 end
 
 module Secret = struct
@@ -72,14 +107,36 @@ module Secret = struct
     data
 
   let create_secret ~env ~(client : Piaf.Client.t) payload =
-    let token = ServiceAccount.get_token ~env () in
     let string_body = payload_to_yojson payload |> Yojson.Safe.to_string in
+    print_endline string_body;
     Piaf.Client.post
       client
-      ~headers:
-        [ "Authorization", Printf.sprintf "Bearer %s" token
-        ; "Content-Type", "application/json"
-        ]
+      ~headers:(Client.make_headers ~env)
       ~body:(Piaf.Body.of_string string_body)
-    @@ Printf.sprintf "/api/v1/namesapce/%s/secrets" payload.metadata.namespace
+    @@ Printf.sprintf "/api/v1/namespace/%s/secrets" payload.metadata.namespace
 end
+
+let watch_crd
+      ~env
+      ~client
+      ~group
+      ~version
+      ~namespace:_
+      ~plural
+      ~(f : Yojson.Safe.t -> unit)
+      ()
+  =
+  let open Result in
+  let _namespace = ServiceAccount.get_namespace ~env () in
+  let path = Printf.sprintf "/apis/%s/%s/%s?watch=true" group version plural in
+  let headers = Client.make_headers ~env in
+  let+ resp = Piaf.Client.get client ~headers path in
+  let body = Piaf.Body.to_stream resp.body in
+
+  Piaf_stream.iter
+    ~f:(fun Faraday.{ buffer; off; len } ->
+      let json =
+        Bigstringaf.substring buffer ~off ~len |> Yojson.Safe.from_string
+      in
+      f json)
+    body

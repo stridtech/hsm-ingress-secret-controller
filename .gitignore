@@ -8,6 +8,10 @@ devenv.local.nix
 # pre-commit
 .pre-commit-config.yaml
 
+# nix
+result
+log
+
 # OCaml
 *.install
 _build

@@ -1,0 +1,37 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: hsm-keys.strid.tech
+spec:
+  group: strid.tech
+  versions:
+    - name: v1alpha
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                akv:
+                  type: string
+                secret:
+                  type: string
+                key:
+                  type: string
+                secretName:
+                  type: string
+              required:
+                - secretName
+                - key
+                - secret
+                - akv
+          required:
+            - spec
+  scope: Namespaced
+  names:
+    plural: hsm-keys
+    singular: hsm-key
+    kind: HsmKey

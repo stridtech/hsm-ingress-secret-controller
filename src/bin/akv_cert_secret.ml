@@ -15,42 +15,61 @@ let setup_log ?style_renderer level =
   Logs.set_reporter (Logs_fmt.reporter ());
   ()
 
-let base_headers = [ "User-Agent", "k8s-akv-client/1.0"; "Accept", "*/*" ]
-
-let request ~env ~sw akv name =
-  let open Piaf in
+let _get_akv_certificate ~env ~sw akv name =
   let open Result in
   let akv_uri = Akv.Certificate.make_uri ~akv ~name () in
-  let* client =
-    Client.create
-      env
-      ~sw
-      ~config:
-        { Config.default with
-          follow_redirects = true
-        ; allow_insecure = false
-        ; flush_headers_immediately = false
-        }
-      akv_uri
-  in
+  let* client = Akv.Client.make ~env ~sw akv in
   let token = Sys.getenv "AKV_ACCESS_TOKEN" in
   let* response =
-    Client.get
-      ~headers:(("Authorization", "Bearer " ^ token) :: base_headers)
-      client
+    Piaf.Client.get ~headers:(Akv.Client.make_headers token) client
     @@ Uri.path_and_query akv_uri
   in
 
-  let+ body = Body.to_string response.body in
+  let+ body = Piaf.Body.to_string response.body in
   Logs.info (fun m -> m "body: %s" body);
   let ret = body |> Yojson.Safe.from_string |> Akv.Certificate.of_yojson in
   match ret with
   | Ok json ->
     Logs.info (fun m -> m "%a" Akv.Certificate.pp json);
-    Client.shutdown client
+    Piaf.Client.shutdown client
   | Error error ->
     Format.eprintf "error: %s@." error;
-    Client.shutdown client
+    Piaf.Client.shutdown client
+
+let printer (watch : Akv_controller.watch) =
+  let a = Printf.sprintf "%s secret: %s in namespace: %s" in
+  match watch with
+  | ADDED crd -> a "ADDED" crd.spec.secret_name crd.metadata.namespace
+  | DELETED crd -> a "DELETED" crd.spec.secret_name crd.metadata.namespace
+
+let handle ~env ~client (watch : Akv_controller.watch) =
+  match watch with
+  | ADDED crd ->
+    Kubernetes.Secret.make_payload
+      ~name:crd.spec.secret_name
+      ~namespace:crd.metadata.namespace
+      Kubernetes.Secret.(TLS { crt = "test"; key = "test" })
+    |> Kubernetes.Secret.create_secret ~env ~client
+  | _ -> failwith "Can't delete"
+
+let request ~env ~sw _akv _name =
+  let open Result in
+  let* client = Kubernetes.Client.make ~sw ~env () in
+  Kubernetes.watch_crd
+    ~env
+    ~client
+    ~group:"strid.tech"
+    ~version:"v1alpha"
+    ~namespace:"*"
+    ~plural:"hsm-keys"
+    ~f:(fun json ->
+      Akv_controller.watch_of_yojson json |> function
+      | Ok watch ->
+        print_endline (printer watch);
+        let _ = handle ~env ~client watch in
+        ()
+      | Error (`Msg err) -> prerr_endline err)
+    ()
 
 let () =
   setup_log (Some Logs.Debug);

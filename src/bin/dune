@@ -1,4 +1,23 @@
 (executable
  (package azure)
  (public_name akv_cert_secret)
- (libraries piaf logs logs.fmt fmt.tty eio_main logs.threaded jose azure.akv))
+ (libraries
+  piaf
+  logs
+  logs.fmt
+  fmt.tty
+  eio_main
+  logs.threaded
+  jose
+  azure.akv
+  azure.kubernetes
+  azure.akv-controller))
+
+(env
+ (dev
+  (flags :standard -warn-error -A+8)))
+
+(executable
+ (package azure)
+ (public_name generate_crd)
+ (libraries openapi azure.akv-controller))

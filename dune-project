@@ -23,9 +23,9 @@
  (tags
   ("add topics" "to describe" your project)))
 
-(package
- (name kubernetes)
- (synopsis "Tools for interacting with kubernetes")
- (depends ocaml dune piaf yojson))
+; (package
+;  (name kubernetes)
+;  (synopsis "Tools for interacting with kubernetes")
+;  (depends ocaml dune piaf yojson))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

@@ -1,0 +1,6 @@
+(library
+ (name akv_controller)
+ (public_name azure.akv-controller)
+ (libraries eio fmt logs mtime piaf uri yojson openapi)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson ppx_deriving_json_schema)))

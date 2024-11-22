@@ -1,0 +1,10 @@
+apiVersion: strid.tech/v1alpha
+kind: HsmKey
+metadata:
+  name: example-hsm-key
+  namespace: default
+spec:
+  akv: stab-dev-akv-01
+  secret: stab-dev-tlscert-01
+  key: stab-dev-tlskey-01
+  secretName: stab-dev-tls-01

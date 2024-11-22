@@ -2,6 +2,9 @@
   buildDunePackage,
   ocamlPackages,
   nix-filter,
+  ppx_deriving_json_schema,
+  openapi,
+  static,
 }:
 
 buildDunePackage {
@@ -16,7 +19,6 @@ buildDunePackage {
       "src"
       # Include this specific path. The path must be under the root.
       ../azure.opam
-      ../kubernetes.opam
       ../dune-project
       # Include all files with the .js extension
       (nix-filter.matchExt "ml")
@@ -33,7 +35,28 @@ buildDunePackage {
     logs
     fmt
 
+    openapi
+
     ppx_deriving
+    ppx_deriving_json_schema
     ppx_deriving_yojson
   ];
+
+  buildPhase = ''
+    runHook preBuild
+    echo "running ${if static then "static" else "release"} build"
+    dune build ./src/bin/akv_cert_secret.exe --display=short --profile=${
+      if static then "static" else "release"
+    }
+    runHook postBuild
+  '';
+
+  installPhase = ''
+    runHook preInstall
+
+    mkdir -p $out/lib $out/bin
+    cp _build/default/src/bin/akv_cert_secret.exe $out/bin/akv_cert_secret
+
+    runHook postInstall
+  '';
 }
