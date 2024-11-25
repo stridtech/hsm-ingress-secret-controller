@@ -34,6 +34,7 @@ buildDunePackage {
     uri
     logs
     fmt
+    base64
 
     openapi
 

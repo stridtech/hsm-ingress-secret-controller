@@ -113,7 +113,11 @@ module Secret = struct
       client
       ~headers:(Client.make_headers ~env)
       ~body:(Piaf.Body.of_string string_body)
-    @@ Printf.sprintf "/api/v1/namespace/%s/secrets" payload.metadata.namespace
+    @@ Printf.sprintf "/api/v1/namespaces/%s/secrets" payload.metadata.namespace
+
+  let delete_secret ~env ~(client : Piaf.Client.t) ~namespace ~name =
+    Piaf.Client.delete client ~headers:(Client.make_headers ~env)
+    @@ Printf.sprintf "/api/v1/namespaces/%s/secrets/%s" namespace name
 end
 
 let watch_crd

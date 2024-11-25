@@ -4,7 +4,12 @@ module Result = struct
   let ( let+ ) result f = map f result
   let ( let* ) = bind
 
-  (* let ( and* ) r1 r2 = match r1, r2 with | Ok x, Ok y -> Ok (x, y) | Ok _,
+  let both = function
+    | Ok x, Ok y -> Ok (x, y)
+    | Ok _, Error e | Error e, Ok _ | Error e, Error _ -> Error e
+
+  (*
+     let ( and* ) r1 r2 = match r1, r2 with | Ok x, Ok y -> Ok (x, y) | Ok _,
      Error e | Error e, Ok _ | Error e, Error _ -> Error e
   *)
 end
@@ -36,43 +41,83 @@ let _get_akv_certificate ~env ~sw akv name =
     Format.eprintf "error: %s@." error;
     Piaf.Client.shutdown client
 
-let printer (watch : Akv_controller.watch) =
-  let a = Printf.sprintf "%s secret: %s in namespace: %s" in
-  match watch with
-  | ADDED crd -> a "ADDED" crd.spec.secret_name crd.metadata.namespace
-  | DELETED crd -> a "DELETED" crd.spec.secret_name crd.metadata.namespace
+let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
+  let open Result in
+  match crd.Akv_controller.kind with
+  | Hsm _spec -> failwith "hsm not supported"
+  | Akv _spec -> failwith "akv not supported"
+  | Cert spec ->
+    let* client = Akv.Client.make ~env ~sw spec.akv in
+    let akv_uri = Akv.Certificate.make_uri ~akv:spec.akv ~name:spec.cert () in
+    let* response =
+      Piaf.Client.get ~headers:(Akv.Client.make_headers token) client
+      @@ Uri.path_and_query akv_uri
+    in
 
-let handle ~env ~client (watch : Akv_controller.watch) =
+    let* body = Piaf.Body.to_string response.body in
+    Logs.info (fun m -> m "body: %s" body);
+    let* ret =
+      body
+      |> Yojson.Safe.from_string
+      |> Akv.Certificate.of_yojson
+      |> Result.map_error (fun e -> `Msg e)
+    in
+    Ok ret.cer
+
+let handle ~env ~sw ~kube_client (watch : Akv_controller.watch) =
+  let open Result in
+  let token = Sys.getenv "AKV_ACCESS_TOKEN" in
   match watch with
   | ADDED crd ->
-    Kubernetes.Secret.make_payload
-      ~name:crd.spec.secret_name
+    let certificate = get_certificate ~env ~sw ~token crd in
+    (match certificate with
+    | Ok certificate ->
+      Kubernetes.Secret.make_payload
+        ~name:(Akv_controller.name_of_crd crd)
+        ~namespace:crd.metadata.namespace
+        Kubernetes.Secret.(
+          TLS
+            { crt = Base64.encode_string certificate
+            ; key = Akv_controller.key_of_crd crd |> Base64.encode_string
+            })
+      |> Kubernetes.Secret.create_secret ~env ~client:kube_client
+    | Error e ->
+      let () =
+        Logs.warn (fun m -> m "Secret creation error: %a" Piaf.Error.pp_hum e)
+      in
+      Error e)
+  | DELETED crd ->
+    Kubernetes.Secret.delete_secret
+      ~env
+      ~client:kube_client
+      ~name:(Akv_controller.name_of_crd crd)
       ~namespace:crd.metadata.namespace
-      Kubernetes.Secret.(TLS { crt = "test"; key = "test" })
-    |> Kubernetes.Secret.create_secret ~env ~client
-  | _ -> failwith "Can't delete"
 
 let request ~env ~sw _akv _name =
   let open Result in
-  let* client = Kubernetes.Client.make ~sw ~env () in
-  Kubernetes.watch_crd
-    ~env
-    ~client
-    ~group:"strid.tech"
-    ~version:"v1alpha"
-    ~namespace:"*"
-    ~plural:"hsm-keys"
-    ~f:(fun json ->
-      Akv_controller.watch_of_yojson json |> function
-      | Ok watch ->
-        print_endline (printer watch);
-        let _ = handle ~env ~client watch in
-        ()
-      | Error (`Msg err) -> prerr_endline err)
-    ()
+  let* kube_client = Kubernetes.Client.make ~sw ~env () in
+  let f json =
+    Logs.info (fun m -> m "Watch data: %s" (Yojson.Safe.to_string json));
+    Akv_controller.watch_of_yojson json |> function
+    | Ok watch ->
+      let _ = handle ~env ~sw ~kube_client watch in
+      ()
+    | Error (`Msg err) -> prerr_endline err
+  in
+  let watch_crd =
+    Kubernetes.watch_crd
+      ~env
+      ~client:kube_client
+      ~group:"strid.tech"
+      ~version:"v1alpha"
+      ~namespace:"*"
+      ~f
+  in
+  Eio.Fiber.pair (watch_crd ~plural:"cert-keys") (watch_crd ~plural:"akv-keys")
+  |> Result.both
 
 let () =
-  setup_log (Some Logs.Debug);
+  setup_log (Some Logs.Info);
   let akv = ref "" in
   let name = ref "" in
   Arg.parse
@@ -84,5 +129,5 @@ let () =
   Eio_main.run (fun env ->
     Eio.Switch.run (fun sw ->
       match request ~sw ~env !akv !name with
-      | Ok () -> ()
+      | Ok ((), ()) -> ()
       | Error e -> failwith (Piaf.Error.to_string e)))

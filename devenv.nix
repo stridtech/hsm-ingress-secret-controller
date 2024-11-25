@@ -134,6 +134,7 @@ in
       uri
       logs
       fmt
+      base64
 
       ppx_deriving
       ppx_deriving_yojson

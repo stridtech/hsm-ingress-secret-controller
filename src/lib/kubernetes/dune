@@ -1,6 +1,6 @@
 (library
  (name kubernetes)
  (public_name azure.kubernetes)
- (libraries eio fmt logs mtime piaf uri yojson)
+ (libraries eio fmt logs mtime piaf uri yojson base64)
  (preprocess
   (pps ppx_deriving.show ppx_deriving_yojson)))

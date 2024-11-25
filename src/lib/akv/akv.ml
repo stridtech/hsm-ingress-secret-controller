@@ -41,7 +41,7 @@ module Certificate = struct
     ; created : int
     ; updated : int
     }
-  [@@deriving show, yojson]
+  [@@deriving show, yojson { strict = false }]
 
   type t =
     { id : string
