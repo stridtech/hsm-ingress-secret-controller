@@ -24,7 +24,9 @@ let _get_akv_certificate ~env ~sw akv name =
   let open Result in
   let akv_uri = Akv.Certificate.make_uri ~akv ~name () in
   let* client = Akv.Client.make ~env ~sw akv in
-  let token = Sys.getenv "AKV_ACCESS_TOKEN" in
+  let* token =
+    Msal.get_access_token ~env ~sw ~scope:"https://vault.azure.net/.default" ()
+  in
   let* response =
     Piaf.Client.get ~headers:(Akv.Client.make_headers token) client
     @@ Uri.path_and_query akv_uri
@@ -44,8 +46,40 @@ let _get_akv_certificate ~env ~sw akv name =
 let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
   let open Result in
   match crd.Akv_controller.kind with
-  | Hsm _spec -> failwith "hsm not supported"
-  | Akv _spec -> failwith "akv not supported"
+  | Hsm spec ->
+    let* client = Akv.Client.make ~env ~sw spec.akv in
+    let akv_uri = Akv.Secret.make_uri ~akv:spec.akv ~name:spec.secret () in
+    let* response =
+      Piaf.Client.get ~headers:(Akv.Client.make_headers token) client
+      @@ Uri.path_and_query akv_uri
+    in
+
+    let* body = Piaf.Body.to_string response.body in
+    Logs.info (fun m -> m "body: %s" body);
+    let* ret =
+      body
+      |> Yojson.Safe.from_string
+      |> Akv.Secret.of_yojson
+      |> Result.map_error (fun e -> `Msg e)
+    in
+    Ok ret.value
+  | Akv spec ->
+    let* client = Akv.Client.make ~env ~sw spec.akv in
+    let akv_uri = Akv.Secret.make_uri ~akv:spec.akv ~name:spec.secret () in
+    let* response =
+      Piaf.Client.get ~headers:(Akv.Client.make_headers token) client
+      @@ Uri.path_and_query akv_uri
+    in
+
+    let* body = Piaf.Body.to_string response.body in
+    Logs.info (fun m -> m "body: %s" body);
+    let* ret =
+      body
+      |> Yojson.Safe.from_string
+      |> Akv.Secret.of_yojson
+      |> Result.map_error (fun e -> `Msg e)
+    in
+    Ok ret.value
   | Cert spec ->
     let* client = Akv.Client.make ~env ~sw spec.akv in
     let akv_uri = Akv.Certificate.make_uri ~akv:spec.akv ~name:spec.cert () in
@@ -66,7 +100,9 @@ let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
 
 let handle ~env ~sw ~kube_client (watch : Akv_controller.watch) =
   let open Result in
-  let token = Sys.getenv "AKV_ACCESS_TOKEN" in
+  let* token =
+    Msal.get_access_token ~env ~sw ~scope:"https://vault.azure.net/.default" ()
+  in
   match watch with
   | ADDED crd ->
     let certificate = get_certificate ~env ~sw ~token crd in

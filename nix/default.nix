@@ -5,6 +5,7 @@
   ppx_deriving_json_schema,
   openapi,
   static,
+  msal,
 }:
 
 buildDunePackage {
@@ -35,6 +36,7 @@ buildDunePackage {
     logs
     fmt
     base64
+    msal
 
     openapi
 

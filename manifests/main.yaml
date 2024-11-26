@@ -12,21 +12,21 @@ spec:
     metadata:
       labels:
         app: crd-secret-controller
+        azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: crd-secret-controller-sa
+      serviceAccountName: hsm-ingress-secret-creator
       containers:
         - name: controller
-          image: stabdevacr01.azurecr.io/akv-cert-secret:144
+          image: stabdevacr01.azurecr.io/akv-cert-secret:153
           imagePullPolicy: Always
-          env:
-            - name: AKV_ACCESS_TOKEN
-              value: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Inp4ZWcyV09OcFRrd041R21lWWN1VGR0QzZKMCIsImtpZCI6Inp4ZWcyV09OcFRrd041R21lWWN1VGR0QzZKMCJ9.eyJhdWQiOiJjZmE4YjMzOS04MmEyLTQ3MWEtYTNjOS0wZmMwYmU3YTQwOTMiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8wMmY4Mjk4Zi1iYjk1LTRlZGEtOTVhYi00Y2Y3MjgyMzFiNmQvIiwiaWF0IjoxNzMyNTQ5NzU5LCJuYmYiOjE3MzI1NDk3NTksImV4cCI6MTczMjU1NDAwNywiYWNyIjoiMSIsImFpbyI6IkFWUUFxLzhZQUFBQXhrbmpteVV1RzlPRzhBNEJTVks2V1pxdGZTaDlYZ29RSWxyQ1AzT1ROVkpBYzJaKzV3UFhTS2FIbEtSaVBlTG03aFYrUzArZis4SWNIQ3RYUFRHMGQzR3A0aWNlejhYc2JLYTV5cUx3dzRZPSIsImFtciI6WyJwd2QiLCJtZmEiXSwiYXBwaWQiOiIwNGIwNzc5NS04ZGRiLTQ2MWEtYmJlZS0wMmY5ZTFiZjdiNDYiLCJhcHBpZGFjciI6IjAiLCJmYW1pbHlfbmFtZSI6IlN0cmlkIiwiZ2l2ZW5fbmFtZSI6IlVscmlrIiwiZ3JvdXBzIjpbImY1MWZjMTZmLWI2NWEtNDYxMS1hYjZmLTc2ZDBiNWFiZDZkZCJdLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiI3Ny4xMDUuMjM2LjE4MSIsIm5hbWUiOiJVbHJpayBTdHJpZCIsIm9pZCI6IjdmYzJjNTVhLTViMTEtNDRiYS05ZTExLWE1MGE3MTI1OWZhOCIsInB1aWQiOiIxMDAzMjAwMUE0NEM4QjlCIiwicmgiOiIxLkFVNEFqeW40QXBXNzJrNlZxMHozS0NNYmJUbXpxTS1pZ2hwSG84a1B3TDU2UUpNT0FYWk9BQS4iLCJzY3AiOiJ1c2VyX2ltcGVyc29uYXRpb24iLCJzdWIiOiItb1M0ME44SzNnckZMS1VzOWswdWJKdy1BTF9GQy04RTBQalZCQ1E4RnJFIiwidGlkIjoiMDJmODI5OGYtYmI5NS00ZWRhLTk1YWItNGNmNzI4MjMxYjZkIiwidW5pcXVlX25hbWUiOiJ1bHJpa0BzdHJpZC50ZWNoIiwidXBuIjoidWxyaWtAc3RyaWQudGVjaCIsInV0aSI6ImVIamRzd0ZKSjBLaDcwZ0hNZ3VEQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjYyZTkwMzk0LTY5ZjUtNDIzNy05MTkwLTAxMjE3NzE0NWUxMCIsImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfY2MiOlsiQ1AxIl0sInhtc19maWx0ZXJfaW5kZXgiOlsiNzgiXSwieG1zX2lkcmVsIjoiMSAyMCIsInhtc19yZCI6IjAuNDJMbFlCUmk5QU1BIiwieG1zX3NzbSI6IjEifQ.f--mdRve1iJduJR8eiAfiYnTkVFHQOVNiQ5fC2oz-9b2dQ5hM1JI-Crkw4bltyMP2NJJRSOAjU2yzsPRy8_wThnpkzxtqdloUqUTn1o8-q01h56-NrioPwL58nmIsYT9DYT8WZmLl6gBND19xc0y7sknAmzat0uG2J2vk2LletER8MT4idKPgfXX8Vjw2_I6prB71TSrIyMtVGWII5LPIwIibPI6XgFyhebqVE9btdqtuWDFUN5wZwCYk1NeGELTTLXCaXNNSqFfG_7Jkg5982LEQcfotiGVjBBtDUto_Y6hc4meC5QCHEgE6X72xnzjlRO0ki5jpsyMFP7NSZaLoQ
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: crd-secret-controller-sa
+  name: hsm-ingress-secret-creator
   namespace: kube-system
+  annotations:
+    azure.workload.identity/client-id: "23b6b41a-de18-4890-9922-84055817cf18"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -53,5 +53,5 @@ roleRef:
   name: crd-secret-controller-role
 subjects:
   - kind: ServiceAccount
-    name: crd-secret-controller-sa
+    name: hsm-ingress-secret-creator
     namespace: kube-system

@@ -11,7 +11,8 @@
   jose
   azure.akv
   azure.kubernetes
-  azure.akv-controller))
+  azure.akv-controller
+  msal))
 
 (env
  (dev

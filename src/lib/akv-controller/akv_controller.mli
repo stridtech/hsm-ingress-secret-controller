@@ -8,6 +8,7 @@ type akv_spec =
 
 type hsm_spec =
   { hsm : string
+  ; akv : string
   ; secret : string
   ; key : string
   ; secret_name : string [@key "secretName"]

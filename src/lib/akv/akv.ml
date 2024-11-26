@@ -33,6 +33,34 @@ module Client = struct
     ]
 end
 
+module Secret = struct
+  type attributes =
+    { enabled : bool
+    ; created : int
+    ; updated : int
+    ; recoveryLevel : string
+      (* TODO: parse into a type:
+         https://learn.microsoft.com/en-us/rest/api/keyvault/secrets/get-secret/get-secret?view=rest-keyvault-secrets-7.4&tabs=HTTP#deletionrecoverylevel *)
+    }
+  [@@deriving show, yojson { strict = false }]
+
+  type t =
+    { value : string
+    ; id : string
+    ; attributes : attributes
+    }
+  [@@deriving show, yojson { strict = false }]
+
+  let make_uri ~akv ~name ?version () =
+    let host = Printf.sprintf "%s.vault.azure.net" akv in
+    let path =
+      match version with
+      | None -> Printf.sprintf "/secrets/%s" name
+      | Some version -> Printf.sprintf "/secrets/%s/%s" name version
+    in
+    Uri.make ~scheme:"https" ~host ~path ~query:[ "api-version", [ "7.4" ] ] ()
+end
+
 module Certificate = struct
   type attributes =
     { enabled : bool
@@ -60,16 +88,5 @@ module Certificate = struct
       | None -> Printf.sprintf "/certificates/%s" name
       | Some version -> Printf.sprintf "/certificates/%s/%s" name version
     in
-    let uri =
-      Uri.make
-        ~scheme:"https"
-        ~host
-        ~path
-        ~query:[ "api-version", [ "7.4" ] ]
-        ()
-    in
-
-    print_endline @@ Uri.to_string uri;
-
-    uri
+    Uri.make ~scheme:"https" ~host ~path ~query:[ "api-version", [ "7.4" ] ] ()
 end

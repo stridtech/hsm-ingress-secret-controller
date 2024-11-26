@@ -23,6 +23,11 @@
  (tags
   ("add topics" "to describe" your project)))
 
+(package
+ (name msal)
+ (synopsis "Microsoft authentication library")
+ (depends ocaml dune piaf yojson eio jose))
+
 ; (package
 ;  (name kubernetes)
 ;  (synopsis "Tools for interacting with kubernetes")

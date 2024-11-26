@@ -48,10 +48,15 @@
         }:
         let
           openapi_packages = (pkgs.ocaml-ng.ocamlPackages_5_2.callPackage ./nix/openapi.nix { });
+          msal = pkgs.ocaml-ng.ocamlPackages_5_2.callPackage ./nix/msal.nix {
+            nix-filter = nix-filter.lib;
+          };
         in
         rec {
-          akv_cert_secret = pkgs.ocaml-ng.ocamlPackages_5_2.callPackage ./nix/default.nix {
+          inherit msal;
+          akv_cert_secret = pkgs.ocaml-ng.ocamlPackages_5_2.callPackage ./nix {
             inherit (openapi_packages) openapi ppx_deriving_json_schema;
+            inherit msal;
             nix-filter = nix-filter.lib;
             static = true;
           };
