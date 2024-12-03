@@ -1,0 +1,60 @@
+# Default values for hsm-ingress-secret-controller
+
+replicaCount: 1
+
+image:
+  repository: stabdevacr01.azurecr.io/akv-cert-secret
+  tag: "159"
+  pullPolicy: Always
+
+serviceAccount:
+  name: hsm-ingress-secret-creator
+  annotations:
+    clientId: "23b6b41a-de18-4890-9922-84055817cf18"
+
+namespace: kube-system
+
+podLabels:
+  app: hsm-ingress-secret-controller
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Probes configuration
+probes:
+  enabled: false
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Security contexts
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Logging and monitoring annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: /metrics
+  prometheus.io/port: "8080"

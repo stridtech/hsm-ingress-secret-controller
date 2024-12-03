@@ -1,0 +1,11 @@
+apiVersion: v2
+name: hsm-ingress-secret-controller
+description: A Helm chart for HSM Ingress Secret Controller
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - azure
+  - workload-identity
+  - secrets
+  - hsm
+  - ingress

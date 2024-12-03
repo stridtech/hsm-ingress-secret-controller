@@ -1,0 +1,31 @@
+{{/* Expand the name of the chart */}}
+{{- define "hsm-ingress-secret-controller.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/* Create a default fully qualified app name */}}
+{{- define "hsm-ingress-secret-controller.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/* Create chart labels */}}
+{{- define "hsm-ingress-secret-controller.labels" -}}
+helm.sh/chart: {{ include "hsm-ingress-secret-controller.name" . }}-{{ .Chart.Version | replace "+" "_" }}
+{{ include "hsm-ingress-secret-controller.selectorLabels" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/* Create selector labels */}}
+{{- define "hsm-ingress-secret-controller.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "hsm-ingress-secret-controller.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
