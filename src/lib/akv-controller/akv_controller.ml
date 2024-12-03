@@ -85,6 +85,7 @@ let crd_to_yojson crd =
 type watch =
   | ADDED of crd
   | DELETED of crd
+  | MODIFIED of crd
 
 let watch_of_yojson json =
   let module Json = Yojson.Safe.Util in
@@ -93,6 +94,7 @@ let watch_of_yojson json =
   match typ, crd with
   | "ADDED", Ok crd -> Ok (ADDED crd)
   | "DELETED", Ok crd -> Ok (DELETED crd)
+  | "MODIFIED", Ok crd -> Ok (MODIFIED crd)
   | _, Ok _crd -> Error (`Msg "unknown watch")
   | _, Error e -> Error (`Msg ("Yojson parse error: " ^ e))
 

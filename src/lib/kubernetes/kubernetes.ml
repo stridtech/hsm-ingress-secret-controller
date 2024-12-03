@@ -115,24 +115,35 @@ module Secret = struct
       ~body:(Piaf.Body.of_string string_body)
     @@ Printf.sprintf "/api/v1/namespaces/%s/secrets" payload.metadata.namespace
 
+  let update_secret ~env ~(client : Piaf.Client.t) payload =
+    let string_body = payload_to_yojson payload |> Yojson.Safe.to_string in
+    print_endline string_body;
+    Piaf.Client.put
+      client
+      ~headers:(Client.make_headers ~env)
+      ~body:(Piaf.Body.of_string string_body)
+    @@ Printf.sprintf "/api/v1/namespaces/%s/secrets" payload.metadata.namespace
+
   let delete_secret ~env ~(client : Piaf.Client.t) ~namespace ~name =
     Piaf.Client.delete client ~headers:(Client.make_headers ~env)
     @@ Printf.sprintf "/api/v1/namespaces/%s/secrets/%s" namespace name
 end
 
-let watch_crd
+let get_crd
       ~env
       ~client
       ~group
       ~version
-      ~namespace:_
       ~plural
       ~(f : Yojson.Safe.t -> unit)
+      ?(watch = false)
       ()
   =
   let open Result in
-  let _namespace = ServiceAccount.get_namespace ~env () in
-  let path = Printf.sprintf "/apis/%s/%s/%s?watch=true" group version plural in
+  let watch = if watch then "true" else "false" in
+  let path =
+    Printf.sprintf "/apis/%s/%s/%s?watch=%s" group version plural watch
+  in
   let headers = Client.make_headers ~env in
   let+ resp = Piaf.Client.get client ~headers path in
   let body = Piaf.Body.to_stream resp.body in

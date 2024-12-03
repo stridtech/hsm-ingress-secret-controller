@@ -47,6 +47,7 @@ type crd =
 type watch =
   | ADDED of crd
   | DELETED of crd
+  | MODIFIED of crd
 
 val watch_of_yojson : Yojson.Safe.t -> (watch, [> `Msg of string ]) result
 val key_of_crd : crd -> string
