@@ -1,19 +1,3 @@
-module Result = struct
-  include Result
-
-  let ( let+ ) result f = map f result
-  let ( let* ) = bind
-
-  let both = function
-    | Ok x, Ok y -> Ok (x, y)
-    | Ok _, Error e | Error e, Ok _ | Error e, Error _ -> Error e
-
-  (*
-     let ( and* ) r1 r2 = match r1, r2 with | Ok x, Ok y -> Ok (x, y) | Ok _,
-     Error e | Error e, Ok _ | Error e, Error _ -> Error e
-  *)
-end
-
 module Error = struct
   type t =
     [ `Msg of string
@@ -91,33 +75,7 @@ let get_access_token_request_description
   in
   { uri; headers; body = Some body; meth = Post }
 
-(* Eio stuff *)
-let get_access_token_request_description' ~env ~scope () =
-  let open Result in
-  let* client_id = get_client_id () in
-  let* tenant_id = get_tenant_id () in
-  let* token_path = get_token_path () in
-
-  let fs = Eio.Stdenv.fs env in
-  let federated_token = Eio.Path.load Eio.Path.(fs / token_path) in
-
-  Ok
-    (get_access_token_request_description
-       ~tenant_id
-       ~client_id
-       ~federated_token
-       ~scope)
-
-let get_access_token ~sw ~env ~scope () : (string, Piaf.Error.t) result =
-  let open Result in
-  match get_access_token_request_description' ~env ~scope () with
-  | Ok { uri; headers; body; _ } ->
-    let body = Option.map Piaf.Body.of_string body in
-    let* res = Piaf.Client.Oneshot.post ~sw ~headers ?body env uri in
-    let+ body = Piaf.Body.to_string res.body in
-    Yojson.Safe.from_string body
-    |> Yojson.Safe.Util.member "access_token"
-    |> Yojson.Safe.Util.to_string
-  | Error e ->
-    Logs.err (fun m -> m "Environment error: %a" Error.pp_hum e);
-    failwith @@ Error.to_string e
+let token_of_response body =
+  Yojson.Safe.from_string body
+  |> Yojson.Safe.Util.member "access_token"
+  |> Yojson.Safe.Util.to_string

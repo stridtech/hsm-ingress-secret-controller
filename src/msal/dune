@@ -1,4 +1,17 @@
 (library
  (public_name msal)
  (name msal)
- (libraries eio jose piaf))
+ (modules msal)
+ (libraries uri yojson))
+
+(library
+ (public_name msal.eio)
+ (name msal_eio)
+ (modules msal_eio)
+ (libraries msal eio))
+
+(library
+ (public_name msal.piaf)
+ (name msal_piaf)
+ (modules msal_piaf)
+ (libraries msal.eio piaf))

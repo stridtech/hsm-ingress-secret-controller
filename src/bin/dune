@@ -12,7 +12,8 @@
   azure.akv
   azure.kubernetes
   azure.akv-controller
-  msal))
+  msal
+  msal.piaf))
 
 (env
  (dev

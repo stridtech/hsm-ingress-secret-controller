@@ -3,15 +3,6 @@ module Result = struct
 
   let ( let+ ) result f = map f result
   let ( let* ) = bind
-
-  let both = function
-    | Ok x, Ok y -> Ok (x, y)
-    | Ok _, Error e | Error e, Ok _ | Error e, Error _ -> Error e
-
-  (*
-     let ( and* ) r1 r2 = match r1, r2 with | Ok x, Ok y -> Ok (x, y) | Ok _,
-     Error e | Error e, Ok _ | Error e, Error _ -> Error e
-  *)
 end
 
 let setup_log ?style_renderer level =
@@ -78,8 +69,14 @@ let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
 let handle ~env ~sw ~kube_client (watch : Akv_controller.watch) =
   let open Result in
   let* token =
-    Msal.get_access_token ~env ~sw ~scope:"https://vault.azure.net/.default" ()
+    Msal_piaf.get_access_token
+      ~env
+      ~sw
+      ~scope:"https://vault.azure.net/.default"
+      ()
+    |> Result.map_error (fun e -> `Msg (Msal.Error.to_string e))
   in
+  let token = Msal.token_of_response token in
   match watch with
   | ADDED crd ->
     let certificate = get_certificate ~env ~sw ~token crd in
