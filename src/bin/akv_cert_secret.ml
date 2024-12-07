@@ -1,7 +1,7 @@
 module Result = struct
   include Result
 
-  let ( let+ ) result f = map f result
+  let[@warning "-32"] ( let+ ) result f = map f result
   let ( let* ) = bind
 end
 
