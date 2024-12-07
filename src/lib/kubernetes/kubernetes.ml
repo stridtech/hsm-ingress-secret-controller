@@ -108,7 +108,7 @@ module Secret = struct
 
   let create_secret ~env ~(client : Piaf.Client.t) payload =
     let string_body = payload_to_yojson payload |> Yojson.Safe.to_string in
-    print_endline string_body;
+    Logs.debug (fun m -> m "%s" string_body);
     Piaf.Client.post
       client
       ~headers:(Client.make_headers ~env)
@@ -117,7 +117,7 @@ module Secret = struct
 
   let update_secret ~env ~(client : Piaf.Client.t) payload =
     let string_body = payload_to_yojson payload |> Yojson.Safe.to_string in
-    print_endline string_body;
+    Logs.debug (fun m -> m "%s" string_body);
     Piaf.Client.put
       client
       ~headers:(Client.make_headers ~env)

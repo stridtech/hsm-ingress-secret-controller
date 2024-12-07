@@ -23,7 +23,7 @@ let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
     in
 
     let* body = Piaf.Body.to_string response.body in
-    Logs.info (fun m -> m "body: %s" body);
+    Logs.debug (fun m -> m "certificate body: %s" body);
     let* ret =
       body
       |> Yojson.Safe.from_string
@@ -40,7 +40,7 @@ let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
     in
 
     let* body = Piaf.Body.to_string response.body in
-    Logs.info (fun m -> m "body: %s" body);
+    Logs.debug (fun m -> m "certificate body: %s" body);
     let* ret =
       body
       |> Yojson.Safe.from_string
@@ -57,7 +57,7 @@ let get_certificate ~env ~sw ~token crd : (string, [> Piaf.Error.t ]) result =
     in
 
     let* body = Piaf.Body.to_string response.body in
-    Logs.info (fun m -> m "body: %s" body);
+    Logs.debug (fun m -> m "certificate body: %s" body);
     let* ret =
       body
       |> Yojson.Safe.from_string
@@ -129,7 +129,7 @@ let run ~env ~sw =
     let f json =
       match watch with
       | Some true ->
-        Logs.info (fun m ->
+        Logs.debug (fun m ->
           m "Watching: true\nData: %s" (Yojson.Safe.to_string json));
         Akv_controller.watch_of_yojson json |> ( function
          | Ok watch ->
@@ -137,7 +137,7 @@ let run ~env ~sw =
            ()
          | Error (`Msg err) -> prerr_endline err )
       | _ ->
-        Logs.info (fun m ->
+        Logs.debug (fun m ->
           m "Watching: false\nData: %s" (Yojson.Safe.to_string json));
         Akv_controller.crd_of_yojson json |> ( function
          | Ok watch ->
