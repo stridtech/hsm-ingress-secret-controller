@@ -1,6 +1,6 @@
 (executable
  (package azure)
- (public_name akv_cert_secret)
+ (public_name hsm_ingress_secret_controller)
  (libraries
   piaf
   logs

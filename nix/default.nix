@@ -48,7 +48,7 @@ buildDunePackage {
   buildPhase = ''
     runHook preBuild
     echo "running ${if static then "static" else "release"} build"
-    dune build ./src/bin/akv_cert_secret.exe --display=short --profile=${
+    dune build ./src/bin/hsm_ingress_secret_controller.exe --display=short --profile=${
       if static then "static" else "release"
     }
     runHook postBuild
@@ -58,7 +58,7 @@ buildDunePackage {
     runHook preInstall
 
     mkdir -p $out/lib $out/bin
-    cp _build/default/src/bin/akv_cert_secret.exe $out/bin/akv_cert_secret
+    cp _build/default/src/bin/hsm_ingress_secret_controller.exe $out/bin/hsm_ingress_secret_controller
 
     runHook postInstall
   '';

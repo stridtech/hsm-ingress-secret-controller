@@ -8,4 +8,4 @@ CERTIFICATE=stab-dev-akvc-01
 
 export AKV_ACCESS_TOKEN
 
-dune exec src/bin/akv_cert_secret.exe -- --akv "$AKV" --name "$CERTIFICATE"
+dune exec src/bin/hsm_ingress_secret_controller.exe -- --akv "$AKV" --name "$CERTIFICATE"

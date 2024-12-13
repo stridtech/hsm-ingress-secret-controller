@@ -25,9 +25,7 @@ jobs:
             extra-substituters = https://ocaml.nix-cache.com
             extra-trusted-public-keys = ocaml.nix-cache.com-1:/xI2h2+56rwFfKyyFVbkJSeGqSIYMC/Je+7XXqGKDIY=
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Install devenv.sh
-        run: nix profile install nixpkgs#devenv
-      - name: devenv test
-        run: devenv test
       - name: Build nix packages
         run: nix build .#container
+      - name: devenv test
+        run: nix develop --no-pure-eval -c devenv test

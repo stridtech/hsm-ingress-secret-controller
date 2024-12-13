@@ -1,15 +1,15 @@
 {
-  akv_cert_secret,
+  hsm_ingress_secret_controller,
   cacert,
   nix2container,
 }:
 
 nix2container.buildImage {
-  name = "akv_cert_secret";
+  name = "hsm_ingress_secret_controller";
 
   config = {
     Entrypoint = [
-      "${akv_cert_secret}/bin/akv_cert_secret"
+      "${hsm_ingress_secret_controller}/bin/hsm_ingress_secret_controller"
     ];
     Env = [
       "NIX_SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
